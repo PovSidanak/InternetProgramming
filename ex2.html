@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local data sync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .Ids-ring{
+            display: inlne-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .Ids-ring div{
+            box-sizing: border-box;
+            display: block;
+            position: absolute;
+            width: 60px;
+            margin: 8px;
+            border:8px solid #fff;
+            border-radius: 50%;
+            animation: Ids-ring 1.2s cubic-bezier(0.5, 0, 0.5,1)infinite;
+            border-color: #fff transparent transparent transparent;
+
+
+        }
+        .Ids-ring div:nth-child(1){
+           animation-delay: -0.45s;
+        }
+        .Ids-ring div:nth-child(2){
+            animation-delay: -0.3s;
+        }
+        .Ids-ring div:nth-child(3){
+            animation-delay: -0.15;
+        }
+        @keyframes Ids-ring{
+            0%{
+                transform:rotate(0deg);
+
+            }100%{
+                transform: rotate(360deg);
+            }
+
+        }
+
+    </style>
+
+
+</head>
+<body>
+    <div class="w-screen h-screen flex justify-center items-center">
+        <div class="w-[450px] h-[500px] border-4 border-black pl-5 pr-5 pt-2 pb-2">
+            <div class="bg-gray-200 w-full  h-full pl-2 pr-2 pt-1 pb-1 overflow-y-scroll" id="scroll">
+                <!-- <div class ="w-full h-[80px] bg-white pt-1 pl-2 mb-1">
+                    
+                     <h4 class="text-sm">✈: Emirates-Dubai</h4>
+                     <p class="text-xs">🙂: Pedro</p>
+
+            </div>
+            <div class ="w-full h-[80px] bg-white pt-1 pl-2 mb-1">
+                <h4 class="text-sm">✈: Emirates-Dubai</h4>
+                <p class="text-xs">🙂: Pedro</p>
+
+            </div>
+            <div class ="w-full h-[80px] bg-white pt-1 pl-2 mb-1">
+                <h4 class="text-sm">✈: Emirates-Dubai</h4>
+                <p class="text-xs">🙂: Pedro</p>
+
+            </div>
+            <div class ="w-full h-[80px] bg-white pt-1 pl-2 mb-1">
+                <h4 class="text-sm">✈: Emirates-Dubai</h4>
+                <p class="text-xs">🙂: Pedro</p>
+
+            </div>
+            <div class ="w-full h-[80px] bg-white pt-1 pl-2 mb-1">
+                <h4 class="text-sm">✈: Emirates-Dubai</h4>
+                <p class="text-xs">🙂: Pedro</p>
+
+            </div>
+            <div class ="w-full h-[80px] bg-white pt-1 pl-2 mb-1">
+                <h4 class="text-sm">✈: Emirates-Dubai</h4>
+                <p class="text-xs">🙂: Pedro</p>
+
+            </div>  -->
+            </div>
+
+
+        </div>
+    </div>
+    <script>
+        let  scroll= document.getElementById("scroll");
+        let string_html=''
+        let page_number = 1
+        let page_size =10
+        let isBottom= true
+
+        scroll.addEventListener('scroll', () => {
+            let clientHeight=scroll.clientHeight
+
+            let scrollHeight = scroll.scrollHeight
+        let scrollTop = scroll.scrollTop
+
+        if ((clientHeight + scrollTop) >= scrollHeight * 0.99) {
+            if (isBottom === true) {
+                scroll.innerHTML += 
+                `<div class="flex w-full items-center justify-center">
+                    <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+                </div>`
+                page_number = page_number + 1
+                fetchApi(page_number, page_size)
+                isBottom = false
+            }
+        }
+
+    })
+
+    function fetchApi(page, size) {
+        let url = `https://api.instantwebtools.net/v1/passenger?page=${page}&size=${size}`
+
+        fetch(url)
+            .then((data) => {
+                let array = data.json()
+                array.then((arr) => {
+                    let result = arr['data']
+                    dump_data(page,result)
+                })
+            })
+    }
+
+    function dump_data(page,result){
+        localStorage.setItem("page"+page, JSON.stringify(result));
+        render()
+    }
+
+    function render() {
+        result = localStorage.getItem("page"+page_number)
+        result = JSON.parse(result)
+        console.log(result)
+
+        result.forEach((rs) => {
+            let client_name = rs['name']
+            let airline = rs['airline'][0]
+            let airline_name = airline['name']
+            let country = airline['country']
+
+            string_html +=
+                `
+            <div class="w-full h-[80px] bg-white pt-1 pl-2 mb-1">
+                <h4 class="text-sm">✈: ${airline_name} - ${country}</h4>
+                <p class="text-xs">🙂: ${client_name}</p>
+            </div>
+            `
+        })
+        scroll.innerHTML = string_html
+        isBottom = true
+    }
+
+    for(page_number = 1 ;  ; ++page_number){
+        result = localStorage.getItem("page"+page_number)
+        if (result === null){
+            if (page_number === 1)
+                fetchApi(page_number, page_size)
+            else
+                page_number = page_number - 1
+            break;
+        }
+        result = JSON.parse(result)
+        console.log(result)
+        result.forEach((rs) => {
+            let client_name = rs['name']
+            let airline = rs['airline'][0]
+            let airline_name = airline['name']
+            let country = airline['country']
+
+            string_html +=
+                `
+            <div class="w-full h-[80px] bg-white pt-1 pl-2 mb-1">
+                <h4 class="text-sm">✈: ${airline_name} - ${country}</h4>
+                <p class="text-xs">🙂: ${client_name}</p>
+            </div>
+            `
+        })
+        scroll.innerHTML = string_html
+    }
+
+
+
+    </script>
+    
+</body>
+</html>
